@@ -1,14 +1,38 @@
 import json
-from common.db import get_connection
+import os
+import psycopg2
+
+connection = None
+
+
+def get_connection():
+
+    global connection
+
+    if connection is None or connection.closed:
+        connection = psycopg2.connect(
+            host=os.environ["DB_HOST"],
+            database=os.environ["DB_NAME"],
+            user=os.environ["DB_USER"],
+            password=os.environ["DB_PASSWORD"]
+        )
+
+    return connection
+
 
 
 def lambda_handler(event, context):
 
     user_id = (
         event
-        .get("queryStringParameters", {})
+        .get("pathParameters", {})
         .get("user_id")
     )
+    if not user_id:
+    return {
+            "statusCode": 400,
+            "body": json.dumps({"error": "user_id is required"})
+    }
 
 
     conn = get_connection()
